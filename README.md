@@ -15,7 +15,7 @@ A program capable of reading single digits written by the user.
 ```bash
 pip install pygame tensorflow
 ```
-3. Navigate to the repository's directory and run the main file to start the game:
+3. Navigate to the repository's directory and run the main file to start the program:
 ```bash
 python main.py
 ```
