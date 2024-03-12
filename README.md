@@ -22,7 +22,7 @@ python main.py
 
 ## How It Works
 
-
+The program leverages a Convolutional Neural Network (CNN) trained on the MNIST dataset, a large database of handwritten digits. Users can interactively draw single digits using their cursor. Upon pressing the ‘read’ button, the drawn digit is fed into the trained network. The program then interprets the digit and provides the corresponding numerical output.
 
 ## License
 
