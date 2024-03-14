@@ -2,6 +2,7 @@ import myappkit
 import numpy as np
 import pygame
 from skimage.measure import block_reduce
+from copy import copy
 
 
 class DrawingBoard(myappkit.Item):
@@ -31,28 +32,45 @@ class DrawingBoard(myappkit.Item):
         self.font = pygame.font.Font('Courier Prime Code.ttf', 26)
         self.digit = -1
         self.probability = 0
+        self.current_xy = None
+        self.prev_xy = None
 
     def handleEvent(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            xy = pygame.mouse.get_pos()
-            if myappkit.coords_within_rect(xy, self.rect):
+            if myappkit.coords_within_rect(pygame.mouse.get_pos(), self.rect):
                 self.drawing = True
-                self.draw(xy)
 
         if event.type == pygame.MOUSEBUTTONUP:
             self.drawing = False
+            self.prev_xy = None
 
         if event.type == pygame.MOUSEMOTION and self.drawing:
-            xy = pygame.mouse.get_pos()
-            if myappkit.coords_within_rect(xy, self.rect):
-                self.draw(xy)
-            else:
+            if not myappkit.coords_within_rect(pygame.mouse.get_pos(), self.rect):
                 self.drawing = False
+                self.prev_xy = None
 
     def draw(self, xy):
         (x, y) = xy
         x, y = x - self.origin[0] + self.padding_size, y - self.origin[1] + self.padding_size
         self.grid[y - self.radius: y + self.radius + 1, x - self.radius: x + self.radius + 1] += self.dot
+
+    def update(self):
+        if self.drawing:
+            self.current_xy = pygame.mouse.get_pos()
+            self.draw(self.current_xy)
+
+            if self.prev_xy is not None:
+                distance = np.sqrt(
+                    (self.current_xy[0] - self.prev_xy[0]) ** 2 + (self.current_xy[1] - self.prev_xy[1]) ** 2
+                )
+                if distance >= 0.5 * self.pen_size:
+                    mid_point = (
+                        (self.current_xy[0] + self.prev_xy[0]) // 2,
+                        (self.current_xy[1] + self.prev_xy[1]) // 2,
+                    )
+                    self.draw(mid_point)
+
+            self.prev_xy = copy(self.current_xy)
 
     def render(self, window):
         border = (self.rect[0] - 1, self.rect[1] - 1, self.rect[2] + 2, self.rect[3] + 2)
