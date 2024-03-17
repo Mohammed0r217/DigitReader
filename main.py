@@ -19,7 +19,7 @@ def train_model():
     if not digitRecgnizer.dataset_ready:
         digitRecgnizer.load_dataset()
 
-    digitRecgnizer.fit()
+    digitRecgnizer.fit(epochs=10)
     digitRecgnizer.save('model.keras')
 
 

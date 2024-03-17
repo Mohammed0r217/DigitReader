@@ -54,6 +54,25 @@ class DrawingBoard(myappkit.Item):
         x, y = x - self.origin[0] + self.padding_size, y - self.origin[1] + self.padding_size
         self.grid[y - self.radius: y + self.radius + 1, x - self.radius: x + self.radius + 1] += self.dot
 
+    def fill_gap(self, p1, p2):
+        mid_point = (
+            (p1[0] + p2[0]) // 2,
+            (p1[1] + p2[1]) // 2,
+        )
+        self.draw(mid_point)
+
+        distance = np.sqrt(
+            (p1[0] - mid_point[0]) ** 2 + (p1[1] - mid_point[1]) ** 2
+        )
+        if distance >= 0.5 * self.pen_size:
+            self.fill_gap(p1, mid_point)
+
+        distance = np.sqrt(
+            (p2[0] - mid_point[0]) ** 2 + (p2[1] - mid_point[1]) ** 2
+        )
+        if distance >= 0.5 * self.pen_size:
+            self.fill_gap(p2, mid_point)
+
     def update(self):
         if self.drawing:
             self.current_xy = pygame.mouse.get_pos()
@@ -64,11 +83,7 @@ class DrawingBoard(myappkit.Item):
                     (self.current_xy[0] - self.prev_xy[0]) ** 2 + (self.current_xy[1] - self.prev_xy[1]) ** 2
                 )
                 if distance >= 0.5 * self.pen_size:
-                    mid_point = (
-                        (self.current_xy[0] + self.prev_xy[0]) // 2,
-                        (self.current_xy[1] + self.prev_xy[1]) // 2,
-                    )
-                    self.draw(mid_point)
+                    self.fill_gap(self.current_xy, self.prev_xy)
 
             self.prev_xy = copy(self.current_xy)
 
@@ -86,7 +101,11 @@ class DrawingBoard(myappkit.Item):
 
         if self.digit != -1:
             # text = 'I am ' + str(self.probability) + '% sure that is a ' + str(self.digit) + '.'
-            text = 'That is a ' + str(self.digit) + '.'
+            if self.probability > 50:
+                text = 'That is a ' + str(self.digit) + '.'
+            else:
+                text = 'I am not sure.'
+
             text = self.font.render(text, False, (255, 255, 255))
             window.blit(text, (15, 352))
 
@@ -98,7 +117,7 @@ class DrawingBoard(myappkit.Item):
 
         for x in range(28):
             for y in range(28):
-                digit_array[y][x] = min(digit_array[y][x], 1)
+                digit_array[y][x] = 255 * min(digit_array[y][x], 1)
 
         return digit_array
 

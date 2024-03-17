@@ -1,10 +1,12 @@
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras import datasets, layers
 import numpy as np
 from sklearn.metrics import accuracy_score
 
 
 class ANN:
     def __init__(self):
+        self.datagen = None
         self.accuracy = 0
         self.X_train = None
         self.y_train = None
@@ -15,24 +17,27 @@ class ANN:
         self.model = None
 
     def build(self):
-        self.model = models.Sequential()
+        self.model = Sequential([
+            layers.Rescaling(1. / 255),
+            layers.RandomRotation(factor=(-0.2, 0.2)),
+            layers.RandomZoom(height_factor=(-0.3, 0.3), width_factor=(-0.3, 0.3)),
 
-        self.model.add(layers.ZeroPadding2D(padding=(1, 1)))
-        self.model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(30, 30, 1)))
-        self.model.add(layers.MaxPooling2D((2, 2)))
+            layers.ZeroPadding2D(padding=(1, 1)),
+            layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(30, 30, 1)),
+            layers.MaxPooling2D((2, 2)),
 
-        self.model.add(layers.ZeroPadding2D(padding=(1, 1)))
-        self.model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-        self.model.add(layers.MaxPooling2D((2, 2)))
+            layers.ZeroPadding2D(padding=(1, 1)),
+            layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
 
-        self.model.add(layers.ZeroPadding2D(padding=(1, 1)))
-        self.model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+            layers.ZeroPadding2D(padding=(1, 1)),
+            layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
 
-        self.model.add(layers.Flatten())
-        self.model.add(layers.Dense(64, activation='relu'))
-
-        self.model.add(layers.Dense(10))
-        self.model.add(layers.Softmax())
+            layers.Flatten(),
+            layers.Dense(units=64, activation='relu'),
+            layers.Dense(10),
+            layers.Softmax(),
+        ])
 
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
@@ -44,8 +49,6 @@ class ANN:
         self.X_train = self.X_train.reshape((60000, 28, 28, 1))
         self.X_test = self.X_test.reshape((10000, 28, 28, 1))
 
-        self.X_train, self.X_test = self.X_train / 255.0, self.X_test / 255.0
-
         encoded_array = []
         for i in self.y_train:
             arr = [0] * 10
@@ -55,8 +58,13 @@ class ANN:
 
         self.dataset_ready = True
 
-    def fit(self, epoch=10, batch_size=32):
-        self.model.fit(self.X_train, self.y_train, epochs=epoch, batch_size=batch_size)
+    def fit(self, epochs=10, batch_size=32):
+        self.model.fit(
+            x=self.X_train,
+            y=self.y_train,
+            batch_size=batch_size,
+            epochs=epochs
+        )
 
     def predict(self, X):
         y_pred = self.model.predict(X, verbose=0)
@@ -72,4 +80,4 @@ class ANN:
         self.model.save(path)
 
     def load(self, path: str):
-        self.model = models.load_model(path)
+        self.model = load_model(path)
